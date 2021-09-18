@@ -1,0 +1,7 @@
+{
+  "app": {
+    "title": "Ce titre contient {count, plural, =0{aucun résultat} one{un résultat} other{# résultats}}"
+  },
+  "increase": "Augmenter les résultats",
+  "definition": "Une super définition"
+}
