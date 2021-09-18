@@ -8,6 +8,7 @@
     "prebuild": "rm -rf ./dist",
     "build": "rollup -c",
     "dev": "rollup -c -w",
+    "test": "",
     "validate": "svelte-check",
     "prepublishOnly": "npm run build",
     "publish": "npm run build && npm run validate && np"
