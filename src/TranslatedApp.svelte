@@ -7,9 +7,7 @@
   export let translationsFolder: string = "/langs";
 
   //if used in ssr mode, should get default language from $browser request headers
-  i18nStore.init(languages, defaultLanguage, translationsFolder)
-    .then(e => console.log("init complete"));
-    
+  i18nStore.init(languages, defaultLanguage, translationsFolder);    
 </script>
 
 {#if !hideContentWhileLoading || !$i18nStore.isLoading}
