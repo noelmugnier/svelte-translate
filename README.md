@@ -29,6 +29,15 @@ This component use [MessageFormat.js](https://github.com/messageformat/messagefo
     <span i18n={"simpleid"}>Text without complex construction</span>
 </TranslatedApp>
 ```
+Then add two json files (fr-FR.json/en-GB.json) in public/langs folder (can be changed with attribute translationsFolder) containing your translations :
+
+```json
+{
+  "myid": "Custom translation text with bindings {sampleValue}",
+  "simpleid": "Custom text without bindings",
+}
+
+```
 
 # TODO
 
