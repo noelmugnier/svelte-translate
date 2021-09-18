@@ -50,8 +50,8 @@ export const i18nStore = {
     let languages:lang[] = [...selectedLanguages];
     let languageSelectorEnabled:boolean = languages.length > 1 ? true : false;
     
-    //initialize message format with language codes provided by TranslatedApp languages
-    mf = new MessageFormat(languages.map((l) => l.code));
+    //initialize message format with selected language code
+    mf = new MessageFormat(language.code);
     await setTranslations(language, languages, languageSelectorEnabled);
   },
   setLanguage: async (language:lang): Promise<void> => {
