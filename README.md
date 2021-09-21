@@ -2,7 +2,6 @@
 # Svelte Translate Tool (inspired by angular i18n)
 
 The goal of this component is to use a dynamic translation service (loaded from xx-XX.json files) and fallback to the text in html tags if no translations are provided.
-The main reason is that I hate to navigate to the translation files to be able to know what's the default html content in my components.
 
 # MessageFormat
 
@@ -19,6 +18,8 @@ This component use [MessageFormat.js](https://github.com/messageformat/messagefo
 	  TranslatedApp,
 	  LanguageSelector
 	} from "svelte-translate";
+
+	let sampleValue = 0;
 </script>
 ```
 
@@ -36,11 +37,10 @@ Then add two json files (fr-FR.json/en-GB.json) in public/langs folder (can be c
   "myid": "Custom translation text with bindings {sampleValue}",
   "simpleid": "Custom text without bindings",
 }
-
 ```
 
 # TODO
 
 * [ ] detect usage in SSR mode (and use request headers to set language)
-* [ ] create rollup plugin to extract tags (id/text content) in a dedicated translation_xx-XX.json files
-* [ ] create rollup plugin to compile the translations with specific language to replace html tag in compiled source to get precompiled components/websites
+* [ ] create rollup plugin to extract tags (id / tag content) in a dedicated translation_xx-XX.json files
+* [ ] create rollup plugin to compile the translations with specific language to replace html tag in compiled source to get pretranslated app
