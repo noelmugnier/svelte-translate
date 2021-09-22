@@ -46,7 +46,7 @@
     "@messageformat/core": "^3.0.0"
   },
   "description": "The goal of this component is to use a dynamic translation service (loaded from xx-XX.json files) and fallback to the text in html tags if no translations are provided.",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/noelmugnier/svelte-translate.git"
