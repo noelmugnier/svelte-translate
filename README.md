@@ -42,6 +42,7 @@ Then add two json files (fr-FR.json/en-GB.json) in public/langs folder (can be c
 # TODO
 
 * [x] create script to extract tags (id / tag content) in a dedicated translation_xx-XX.xlf files
+* [x] retrieve existing translation from file when generating the translation files to avoid cleared target property
 * [ ] create script to compile xlf files to json in order to use them with the store
 * [ ] add options to extract-i18n.js to specify extraction folder and extraction format
 * [ ] support context/description in def() helper in order to extract them and complete xlf files
