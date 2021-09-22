@@ -18,13 +18,12 @@
 	<LanguageSelector/>
 	<h2 use:i18n={def("app.title",{count})}>
 		This is my default title with 
-		{`{count, plural, =0{no results} one{one result} other{# results}}`} 
-		if no translations found
+		{`{count, plural, =0{no results} one{one result} other{# results}}`}
 	</h2> 
-	<i use:i18n={"definition"}>This is my default definition if no translations found</i>
+	<i use:i18n={"definition"}>This is my default definition</i>
 	<br/> 
 	<br/> 
 	<button on:click={() => count++}>
-		<span use:i18n={"increase"}>Add</span>
+		<span use:i18n={"increase"}>Increase</span>
 	</button>
 </TranslatedApp>
