@@ -15,7 +15,7 @@
 	languages={availableLanguages} 
 	defaultLanguage={languages.enGB} 
 	hideContentWhileLoading={false}>
-	<LanguageSelector/>
+	<LanguageSelector selectedLanguage={languages.frFR}/>
 	<h2 use:i18n={def("app.title",{count})}>
 		This is my default title with 
 		{`{count, plural, =0{no results} one{one result} other{# results}}`}
@@ -23,7 +23,7 @@
 	<i use:i18n={"definition"}>This is my default definition</i>
 	<br/> 
 	<br/> 
-	<button on:click={() => count++}>
-		<span use:i18n={def("increase", {count})}>Increase {count}</span>
+	<button use:i18n={def("increase", {count})} on:click={() => count++}>
+		Increase {count}
 	</button>
 </TranslatedApp>

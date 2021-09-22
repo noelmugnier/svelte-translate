@@ -41,14 +41,7 @@ export const i18nStore = {
     defaultLang.code = defaultLanguage.code;
     defaultLang.name = defaultLanguage.name;
     defaultLang.iso = defaultLanguage.iso;
-
-    translations[defaultLang.iso] = {};
     
-    update((value) => {
-      value.isLoading = true;
-      return value;
-    });
-      
     langsPath = langsFolderPath ? langsFolderPath : langsPath;
 
     let language:lang = defaultLanguage;
@@ -57,7 +50,7 @@ export const i18nStore = {
     
     //initialize message format with selected language code
     mf = new MessageFormat(language.code);
-    await setTranslations(language, languages, languageSelectorEnabled);
+    await setTranslations(language, languages, languageSelectorEnabled, true);
   },
   setLanguage: async (language:lang): Promise<void> => {
     await setTranslations(language);
@@ -81,17 +74,12 @@ export const i18nStore = {
     }
 
     return getTranslationEntry(id, language);
-  },
-  addDefaultTranslation: (id:string, data: string): void => {
-    translations[defaultLang.iso][id] = data;
-  },
+  }
 };
 
-const setTranslations = async (language:lang, languages?:lang[], languageSelectorEnabled?:boolean): Promise<void> => {
+const setTranslations = async (language: lang, languages?: lang[], languageSelectorEnabled?: boolean, initialization:boolean = false): Promise<void> => {
   //only import if language change and if it's not already loaded in translations.
-  if (
-    language.iso !== defaultLang.iso &&
-    language.iso !== get(store).language.iso &&
+  if ((initialization || (language.iso !== get(store).language.iso)) &&
     !translations[language.iso]
   ) {
     try {

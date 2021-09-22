@@ -10,14 +10,9 @@ export const i18n = (node: HTMLElement, params?: i18nType | string) => {
   
   let id:string = typeof params === "string" ? params : params.id;
   let data: Record<string, unknown> = typeof params === "string" ? {} : params.data ? params.data : {};
-  let defaultValue = node.innerHTML;
   let paramsKeys = data ? Object.keys(data) : [];
 
-  //if this id is not registered in the "default" store register it with the default node value.
-  if (!i18nStore.getTranslationEntry(id))
-    i18nStore.addDefaultTranslation(id, defaultValue);
-
-  let unsubscriber : Unsubscriber = i18nStore.subscribe((manager) => {
+  let unsubscriber: Unsubscriber = i18nStore.subscribe((manager) => {    
     let obj: Record<string, unknown> = {};
     if (paramsKeys.length > 0) {
       //retrieve data value from node attributes in order to get an uptodate value while changing language.
@@ -29,6 +24,9 @@ export const i18n = (node: HTMLElement, params?: i18nType | string) => {
       obj = data;
     }
 
+    if (manager.isLoading)
+      return;
+    
     let value = i18nStore.getTranslationFormatted(id, obj);
     node.innerHTML = value ? value : "";
   });
