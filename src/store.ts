@@ -3,7 +3,6 @@ import MessageFormat from '@messageformat/core';
 import { writable, get, Writable } from "svelte/store";
 
 const translations:any = {
-  default: {},
 };
 
 export type lang = {
@@ -19,7 +18,7 @@ export type langStore = {
   languageSelectorEnabled: boolean,
 }
 
-const notDefined:lang = {
+const defaultLang:lang = {
   code: "en",
   iso: "default",
   name: "Default",
@@ -27,7 +26,7 @@ const notDefined:lang = {
 
 const store:Writable<langStore> = writable({
   isLoading: true,
-  language: notDefined,
+  language: defaultLang,
   languages: [],
   languageSelectorEnabled: false,
 });
@@ -38,7 +37,13 @@ const { subscribe, update } = store;
 
 export const i18nStore = {
   subscribe,
-  init: async (selectedLanguages:lang[], defaultLanguage?:lang, langsFolderPath?:string): Promise<void> => {
+  init: async (selectedLanguages: lang[], defaultLanguage: lang, langsFolderPath?: string): Promise<void> => {
+    defaultLang.code = defaultLanguage.code;
+    defaultLang.name = defaultLanguage.name;
+    defaultLang.iso = defaultLanguage.iso;
+
+    translations[defaultLang.iso] = {};
+    
     update((value) => {
       value.isLoading = true;
       return value;
@@ -46,7 +51,7 @@ export const i18nStore = {
       
     langsPath = langsFolderPath ? langsFolderPath : langsPath;
 
-    let language:lang = defaultLanguage ? defaultLanguage : notDefined;
+    let language:lang = defaultLanguage;
     let languages:lang[] = [...selectedLanguages];
     let languageSelectorEnabled:boolean = languages.length > 1 ? true : false;
     
@@ -72,21 +77,21 @@ export const i18nStore = {
   },
   getTranslationEntry: (id:string, language?:lang): string | null => {
     if (!language) {
-      language = notDefined;
+      language = defaultLang;
     }
 
     return getTranslationEntry(id, language);
   },
   addDefaultTranslation: (id:string, data: string): void => {
     if (id.indexOf(".") > -1) {
-      translations[notDefined.iso] = initializeObjectStructure(
-        translations[notDefined.iso],
+      translations[defaultLang.iso] = initializeObjectStructure(
+        translations[defaultLang.iso],
         id.split("."),
         0,
         data
       );
     } else {
-      translations[notDefined.iso][id] = data;
+      translations[defaultLang.iso][id] = data;
     }
   },
 };
@@ -94,7 +99,7 @@ export const i18nStore = {
 const setTranslations = async (language:lang, languages?:lang[], languageSelectorEnabled?:boolean): Promise<void> => {
   //only import if language change and if it's not already loaded in translations.
   if (
-    language.iso !== notDefined.iso &&
+    language.iso !== defaultLang.iso &&
     language.iso !== get(store).language.iso &&
     !translations[language.iso]
   ) {
@@ -132,11 +137,11 @@ const updateConfiguration = (language:lang, languages?:lang[], languageSelectorE
 };
 
 const getTranslationEntry = (id:string, language?:lang): string | null => {
-  language = language ? language : notDefined;
+  language = language ? language : defaultLang;
   let entity = translations[language.iso];
   
   if (!entity) {
-    language = notDefined;
+    language = defaultLang;
     entity = translations[language.iso];
   }
   
@@ -155,11 +160,11 @@ const getTranslationEntry = (id:string, language?:lang): string | null => {
 
   if (!entry || !entry.length || typeof entry !== "string") {
     //if we don't find the translation entry for given language, search with default
-    if (language.iso !== notDefined.iso) {
+    if (language.iso !== defaultLang.iso) {
       console.info(
         `Id ${id} with language ${language.iso} not found, retrieving default value.`
       );
-      return getTranslationEntry(id, notDefined);
+      return getTranslationEntry(id, defaultLang);
     }
 
     return null;
