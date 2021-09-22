@@ -1,7 +1,7 @@
 const fs = require("fs-extra");
 const glob = require("glob");
 const path = require("path");
-const parse5 = require('parse5');
+const {parse} = require('svelte/compiler');
 const lodash = require('lodash');
 const xliff = require('xliff');
 
@@ -43,9 +43,9 @@ async function main() {
  */
 async function extractComponentTranslations(filePath) {
   const srcCode = await fs.readFile(filePath, { encoding: "utf-8" });
-  const document = parse5.parse(srcCode, {sourceCodeLocationInfo: true});  
-
-  return extractTranslationsFromAstNode(document, filePath);
+  const document = parse(srcCode);
+  
+  return extractTranslationsFromAstNode(document.html, filePath);
 }
 
 function initSourcesAndTargetsTranslations(translations) {
@@ -81,38 +81,98 @@ function getComponentNameFromPath(filePath) {
 function extractTranslationsFromAstNode(node, componentPath) {
   let translations = [];
 
-  node.childNodes.forEach(childNode => {
-    if (childNode.childNodes && childNode.childNodes.length)
-      translations = [...translations, ...extractTranslationsFromAstNode(childNode, componentPath)];
-        
-    let i18nAttr = childNode.attrs ? childNode.attrs.find(a => a.name === "use:i18n") : null;
+  node.children.forEach(childNode => {        
+    let i18nAttr = childNode.attributes ? childNode.attributes.find(a => a.name === "i18n" && a.type === "Action") : null;
     if (i18nAttr)
     {
-      let regexpResults = /\{def\([\s]*"(?<id>[A-z0-9.]+)".*/.exec(i18nAttr.value);
-      if (!regexpResults || !regexpResults.groups)
-        regexpResults = /\{[\s]*"(?<id>[A-z0-9.]+)"[\s]*\}/.exec(i18nAttr.value);
-            
-      if (!regexpResults || !regexpResults.groups) {
-        console.error(`No id found for tag <${childNode.nodeName}> on line: ${childNode.sourceCodeLocation.startLine} in component ${component}`);
-      }
-      else {
-        let text = childNode.childNodes.filter(cn => cn.nodeName === '#text');
-        if (text) {
-          let value = text[0].value.replace(/\n/g, '').replace(/\t/g, '');
+      let id = "";
+      let dataKeys = [];
+      let expression = i18nAttr.expression;
+      if (expression.type === "CallExpression") {
+        if (expression.callee.name !== "def")
+          throw `You must use def function with use:i18n on tag <${childNode.name}> on position: ${childNode.start} in component ${component}`;
+                
+        let idProperty = expression.arguments.find(a => a.type === "Literal");
+        id = idProperty ? idProperty.value : "";
 
-          //TODO Use svelte parser to find presence of {`{variable, plural|select, xxxxxxx}`} instead of this shitty regex
-          let regexpComplexBinding = /\{`[\s]*\{.*\}`[\s]*\}/.exec(value);
-          if (regexpComplexBinding && regexpComplexBinding) {
-            value = value.replace(/\{\`/g, '');
-            value = value.replace(/\`\}/g, '');
+        let dataProperty = expression.arguments.find(a => a.type === "ObjectExpression");
+        if (dataProperty) {
+          if (dataProperty.type !== "ObjectExpression") {
+            throw `You must specify data as object when using use:i18n={def("", {})} on tag <${childNode.name}> on position: ${childNode.start} in component ${component}`;
           }
-          
-          //TODO if we are using def("", {xxxx}) check that binded values are present in text
-          
-          translations = [...translations, { id: regexpResults.groups.id, text: value, line: childNode.sourceCodeLocation.startLine, tag: childNode.nodeName, path: componentPath}];
+
+          dataKeys = dataProperty.properties.map(p => p.key.name);
         }
       }
-    };
+      else if (expression.type === "ObjectExpression") {
+        let idProperty = expression.properties.find(p => p.key.name === "id");
+        if (!idProperty) {
+          `You must specify id when using use:i18n={{id:""}} on tag <${childNode.name}> on position: ${childNode.start} in component ${component}`;
+        }
+        id = idProperty.value.value;
+
+        let dataProperty = expression.properties.find(p => p.key.name === "data");
+        if (dataProperty) {
+          if (dataProperty.value.type !== "ObjectExpression") {
+            throw `You must specify data as object when using use:i18n={{id:"", data:{}}} on tag <${childNode.name}> on position: ${childNode.start} in component ${component}`;
+          }
+
+          dataKeys = dataProperty.value.properties.map(p => p.key.name);
+        }
+      }
+      else if (expression.type === "Literal") {
+        id = expression.value;
+      }
+      
+      if(!id || id.length< 1){
+        console.error(`No id found for tag <${childNode.name}> on position: ${childNode.start} in component ${component}`);        
+      }
+
+      if(childNode.children.length < 1){
+        console.error(`Tag <${childNode.name}> don't have content on position: ${childNode.start} in component ${component}`);        
+      }
+
+      if(childNode.children.filter(c => c.type !== "Text" && c.type !== "MustacheTag").length > 0){
+        console.error(`Tag <${childNode.name}> can only have text or simple mustache binding like {xxxx} on position: ${childNode.start} in component ${component}`);        
+      }
+
+      let contentChilds = childNode.children.filter(c => c.type === "Text" || c.type === "MustacheTag");
+      let content = "";
+      contentChilds.forEach(cc => {
+        if (cc.type === "Text") {
+          content += cc.data;
+        }
+        else {
+          if (cc.expression.type === "Identifier")
+            content += cc.expression.name;
+          else if (cc.expression.type === "Literal") {
+            content += cc.expression.value;
+          }
+          else if (cc.expression.type === "TemplateLiteral") {
+            let quasis = "";
+            cc.expression.quasis.filter(q => q.type === "TemplateElement").forEach(q => {
+              quasis += q.value.raw;
+            });
+
+            content += quasis;
+          }
+        }
+      });
+      
+      content = content.replace(/\n/g, '').replace(/\t/g, '');
+
+      dataKeys.forEach(dk => {
+        if (content.indexOf(dk) < 0)
+          console.error(`Binding ${dk} was not found in tag <${childNode.name}> content on position: ${childNode.start} for component ${component}`);
+      })
+      
+      translations = [...translations, { id: id, text: content, line: childNode.start, tag: childNode.name, path: componentPath}];
+        
+    }
+    else {      
+      if (childNode.children && childNode.children.length)
+        translations = [...translations, ...extractTranslationsFromAstNode(childNode, componentPath)];
+    }
   });
   
   return translations;

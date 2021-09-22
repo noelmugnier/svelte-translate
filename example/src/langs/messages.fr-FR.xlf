@@ -3,15 +3,15 @@
     <body>
       <trans-unit id="app.title">
         <source>This is my default title with {count, plural, =0{no results} one{one result} other{# results}}</source>
-        <target>Ceci est le titre par défaut avec {count, plural, =0{aucun résultat} one{un résultat} other{# résultats}} </target>
+        <target></target>
       </trans-unit>
       <trans-unit id="definition">
         <source>This is my default definition</source>
-        <target>Ceci est la définition par défaut</target>
+        <target></target>
       </trans-unit>
       <trans-unit id="increase">
-        <source>Increase {count}</source>
-        <target>Incrémenter {count}</target>
+        <source>Increase count</source>
+        <target></target>
       </trans-unit>
     </body>
   </file>
