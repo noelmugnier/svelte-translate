@@ -132,7 +132,7 @@ async function writeLanguagesTranslations(defaultLanguage, languages, sourcesTra
         fs.mkdirSync(folder);
       }
 
-      await fs.writeFile(`${folder}/${language}.${outputFormat}`, res, 'utf-8');
+      await fs.writeFile(`${folder}/messages.${language}.${outputFormat}`, res, 'utf-8');
     });
 }
 
@@ -142,8 +142,13 @@ async function updateExistingTargetTranslations(defaultLanguage, language, sourc
   }
   
   let updatedTargets = { ...initialTargetTranslations };
+  let file = `./src/${translationsFolder}/messages.${language}.${outputFormat}`;
+  if (!fs.existsSync(file)) {
+    return updatedTargets;
+  }
+
   let res = null;
-  const targetTranslationFile = await fs.readFile(`./src/${translationsFolder}/${language}.${outputFormat}`, { encoding: "utf-8" });
+  const targetTranslationFile = await fs.readFile(file, { encoding: "utf-8" });
   switch (outputFormat)
   {
     case "xlf":
