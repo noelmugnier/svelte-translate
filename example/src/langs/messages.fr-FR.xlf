@@ -2,15 +2,15 @@
   <file original="svelte-translate" datatype="plaintext" source-language="en-GB" target-language="fr-FR">
     <body>
       <trans-unit id="app.title">
-        <source>This is my default title with {`{count, plural, =0{no results} one{one result} other{# results}}`}</source>
-        <target>Ceci est le titre par défaut avec {`{count, plural, =0{aucun résultat} one{un résultat} other{# résultats}}`} </target>
+        <source>This is my default title with {count, plural, =0{no results} one{one result} other{# results}}</source>
+        <target>Ceci est le titre par défaut avec {count, plural, =0{aucun résultat} one{un résultat} other{# résultats}} </target>
       </trans-unit>
       <trans-unit id="definition">
         <source>This is my default definition</source>
         <target>Ceci est la définition par défaut</target>
       </trans-unit>
       <trans-unit id="increase">
-        <source>Increase</source>
+        <source>Increase {count}</source>
         <target>Incrémenter {count}</target>
       </trans-unit>
     </body>

@@ -21,6 +21,11 @@ async function main() {
     }
 
     let languagesTranslations = await Promise.all(files.map((filePath) => compileToTranslationFile(path.resolve(filePath), outputFormat)));
+
+    //generate default language translation file
+    languagesTranslations = [...languagesTranslations, await compileToTranslationFile(path.resolve(files[0]), outputFormat, "source")];
+
+    //generate file for each language
     languagesTranslations.forEach(async lt => {
       await fs.writeFile(path.join(`${destPath}/${destinationFolder}/${lt.language}.json`), JSON.stringify(lt.translations, null, 2));
     })
@@ -28,9 +33,9 @@ async function main() {
 }
 
 /**
- * Processes .svelte file and parse AST tree to find node with attribute use:i18n and extract its text value.
+ * Processes .xlf/.json file and to generate a dedicated xx-XX.json translation file.
  */
-async function compileToTranslationFile(filePath, outputFormat) {
+async function compileToTranslationFile(filePath, outputFormat, objProperty = "target") {
   const srcCode = await fs.readFile(filePath, { encoding: "utf-8" });
 
   let res = null;
@@ -48,11 +53,12 @@ async function compileToTranslationFile(filePath, outputFormat) {
   const existingTranslations = res.resources["svelte-translate"];
   Object.keys(existingTranslations).forEach(key => {
     let existingTranslation = existingTranslations[key];
-    if (existingTranslation && existingTranslation.target && existingTranslation.target.length > 0)
-      results[key] = existingTranslation.target;    
+    if (existingTranslation && existingTranslation[objProperty] && existingTranslation[objProperty].length > 0)
+      results[key] = existingTranslation[objProperty];    
   });
 
-  return { language: res.targetLanguage, translations: results };
+  console.log(objProperty, res.sourceLanguage);
+  return { language: (objProperty === "target" ? res.targetLanguage : res.sourceLanguage), translations: results };
 }
 
 main();

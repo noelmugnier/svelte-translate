@@ -99,7 +99,16 @@ function extractTranslationsFromAstNode(node, componentPath) {
         let text = childNode.childNodes.filter(cn => cn.nodeName === '#text');
         if (text) {
           let value = text[0].value.replace(/\n/g, '').replace(/\t/g, '');
-          //TODO check that binded values in text are present in def("", {xxxx})
+
+          //TODO Use svelte parser to find presence of {`{variable, plural|select, xxxxxxx}`} instead of this shitty regex
+          let regexpComplexBinding = /\{`[\s]*\{.*\}`[\s]*\}/.exec(value);
+          if (regexpComplexBinding && regexpComplexBinding) {
+            value = value.replace(/\{\`/g, '');
+            value = value.replace(/\`\}/g, '');
+          }
+          
+          //TODO if we are using def("", {xxxx}) check that binded values are present in text
+          
           translations = [...translations, { id: regexpResults.groups.id, text: value, line: childNode.sourceCodeLocation.startLine, tag: childNode.nodeName, path: componentPath}];
         }
       }
