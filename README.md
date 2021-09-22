@@ -43,7 +43,7 @@ Then add two json files (fr-FR.json/en-GB.json) in public/langs folder (can be c
 
 * [x] create script to extract tags (id / tag content) in a dedicated messages.xx-XX.xlf files
 * [x] retrieve existing translations from file when generating the files to avoid cleared target properties
-* [ ] create script to compile xlf/json files to xx-XX.json in destination (public/langs) folder
+* [x] create script to compile xlf/json files to xx-XX.json in destination (public/langs) folder
 * [ ] add script args to specify extraction folder and extraction format to extract-i18n.js
 * [ ] add script args to specify import and destination folders and format to generate-i18n.js
 * [ ] support context/description in def() helper in order to extract them and complete xlf files
