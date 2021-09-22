@@ -24,6 +24,6 @@
 	<br/> 
 	<br/> 
 	<button on:click={() => count++}>
-		<span use:i18n={"increase"}>Increase</span>
+		<span use:i18n={def("increase", {count})}>Increase {count}</span>
 	</button>
 </TranslatedApp>

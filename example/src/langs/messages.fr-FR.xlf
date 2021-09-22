@@ -11,7 +11,7 @@
       </trans-unit>
       <trans-unit id="increase">
         <source>Increase</source>
-        <target>Incrémenter</target>
+        <target>Incrémenter {count}</target>
       </trans-unit>
     </body>
   </file>

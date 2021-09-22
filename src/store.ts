@@ -83,16 +83,7 @@ export const i18nStore = {
     return getTranslationEntry(id, language);
   },
   addDefaultTranslation: (id:string, data: string): void => {
-    if (id.indexOf(".") > -1) {
-      translations[defaultLang.iso] = initializeObjectStructure(
-        translations[defaultLang.iso],
-        id.split("."),
-        0,
-        data
-      );
-    } else {
-      translations[defaultLang.iso][id] = data;
-    }
+    translations[defaultLang.iso][id] = data;
   },
 };
 
@@ -145,25 +136,10 @@ const getTranslationEntry = (id:string, language?:lang): string | null => {
     entity = translations[language.iso];
   }
   
-  let entry = "";
-  if (id.indexOf(".") > -1) {
-    let ids = id.split(".");
-    for (let i = 0; i < ids.length; i++) {
-      let subPart = entity[ids[i]];
-      if (!subPart) break;
-      else entity = subPart;
-    }
-    entry = entity;
-  } else {
-    entry = entity[id];
-  }
-
+  const entry = entity[id];
   if (!entry || !entry.length || typeof entry !== "string") {
     //if we don't find the translation entry for given language, search with default
     if (language.iso !== defaultLang.iso) {
-      console.info(
-        `Id ${id} with language ${language.iso} not found, retrieving default value.`
-      );
       return getTranslationEntry(id, defaultLang);
     }
 
@@ -171,21 +147,4 @@ const getTranslationEntry = (id:string, language?:lang): string | null => {
   }
 
   return entry;
-};
-
-//refactoring needed used to create an complex object like {app:{title:""}, definition:""}
-const initializeObjectStructure = (obj:any, idParts:string[], index:number, value?:any) : {} => {
-  if (index < idParts.length - 1) {
-    if (!obj[idParts[index]]) obj[idParts[index]] = {};
-    obj[idParts[index]] = initializeObjectStructure(
-      obj[idParts[index]],
-      idParts,
-      index + 1,
-      value
-    );
-    return obj;
-  } else if (index === idParts.length - 1) {
-    obj[idParts[index]] = value;
-    return obj;
-  } else return obj;
 };
