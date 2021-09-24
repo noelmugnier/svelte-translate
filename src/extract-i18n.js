@@ -1,9 +1,10 @@
 const fs = require("fs-extra");
 const glob = require("glob");
 const path = require("path");
-const {parse} = require('svelte/compiler');
+const svelte = require('svelte/compiler');
 const lodash = require('lodash');
 const xliff = require('xliff');
+const ts = require("typescript");
 
 const srcPath = path.resolve("./src");
 
@@ -31,7 +32,7 @@ async function main() {
       throw err;
     }
 
-    translations = await Promise.all(files.map((filePath) => extractComponentTranslations(path.resolve(filePath))));    
+    translations = await Promise.all(files.map((filePath) => extractComponentTranslations(path.resolve(filePath))));
     const { sources, targets } = initSourcesAndTargetsTranslations(translations[0]);
     
     await writeLanguagesTranslations(defaultLanguage, languages, sources, targets, translationsFolder, outputFormat);
@@ -42,10 +43,26 @@ async function main() {
  * Processes .svelte file and parse AST tree to find node with attribute use:i18n and extract its text value.
  */
 async function extractComponentTranslations(filePath) {
-  const srcCode = await fs.readFile(filePath, { encoding: "utf-8" });
-  const document = parse(srcCode);
-  
-  return extractTranslationsFromAstNode(document.html, filePath);
+  try {
+    const srcCode = await fs.readFile(filePath, { encoding: "utf-8" });
+    
+    const result = await svelte.preprocess(srcCode, {
+      script: (options) => {
+        if(options.attributes.lang === "ts" || options.attributes.lang === "typescript"){
+          return { code: ts.transpileModule(options.content, { compilerOptions: {} }).outputText };
+        }
+        else {
+          return { code: options.content };
+        }
+      }
+    });
+
+    let document = svelte.parse(result.code);
+    return extractTranslationsFromAstNode(document.html, filePath);
+  }
+  catch (e) {
+    console.error(e);
+  }
 }
 
 function initSourcesAndTargetsTranslations(translations) {
@@ -80,102 +97,179 @@ function getComponentNameFromPath(filePath) {
 
 function extractTranslationsFromAstNode(node, componentPath) {
   let translations = [];
-
-  node.children.forEach(childNode => {        
-    let i18nAttr = childNode.attributes ? childNode.attributes.find(a => a.name === "i18n" && a.type === "Action") : null;
-    if (i18nAttr)
-    {
-      let id = "";
-      let dataKeys = [];
-      let expression = i18nAttr.expression;
-      if (expression.type === "CallExpression") {
-        if (expression.callee.name !== "def")
-          throw `You must use def function with use:i18n on tag <${childNode.name}> on position: ${childNode.start} in component ${component}`;
-                
-        let idProperty = expression.arguments.find(a => a.type === "Literal");
-        id = idProperty ? idProperty.value : "";
-
-        let dataProperty = expression.arguments.find(a => a.type === "ObjectExpression");
-        if (dataProperty) {
-          if (dataProperty.type !== "ObjectExpression") {
-            throw `You must specify data as object when using use:i18n={def("", {})} on tag <${childNode.name}> on position: ${childNode.start} in component ${component}`;
-          }
-
-          dataKeys = dataProperty.properties.map(p => p.key.name);
-        }
+  node.children.forEach(childNode => {
+    try {
+      let i18nAttr = childNode.attributes ? childNode.attributes.find(a => a.name === "i18n" && a.type === "Action") : null;
+      if (i18nAttr) {        
+        let { id, dataKeys } = getIdAndObjectKeysFromAttribute(i18nAttr);        
+        let content = getNodeContent(childNode);        
+        validateContentBindings(content, dataKeys);
+        translations = [...translations, { id: id, text: content, line: childNode.start, tag: childNode.name, path: componentPath }];     
       }
-      else if (expression.type === "ObjectExpression") {
-        let idProperty = expression.properties.find(p => p.key.name === "id");
-        if (!idProperty) {
-          `You must specify id when using use:i18n={{id:""}} on tag <${childNode.name}> on position: ${childNode.start} in component ${component}`;
-        }
-        id = idProperty.value.value;
-
-        let dataProperty = expression.properties.find(p => p.key.name === "data");
-        if (dataProperty) {
-          if (dataProperty.value.type !== "ObjectExpression") {
-            throw `You must specify data as object when using use:i18n={{id:"", data:{}}} on tag <${childNode.name}> on position: ${childNode.start} in component ${component}`;
-          }
-
-          dataKeys = dataProperty.value.properties.map(p => p.key.name);
-        }
-      }
-      else if (expression.type === "Literal") {
-        id = expression.value;
-      }
-      
-      if(!id || id.length< 1){
-        console.error(`No id found for tag <${childNode.name}> on position: ${childNode.start} in component ${component}`);        
-      }
-
-      if(childNode.children.length < 1){
-        console.error(`Tag <${childNode.name}> don't have content on position: ${childNode.start} in component ${component}`);        
-      }
-
-      if(childNode.children.filter(c => c.type !== "Text" && c.type !== "MustacheTag").length > 0){
-        console.error(`Tag <${childNode.name}> can only have text or simple mustache binding like {xxxx} on position: ${childNode.start} in component ${component}`);        
-      }
-
-      let contentChilds = childNode.children.filter(c => c.type === "Text" || c.type === "MustacheTag");
-      let content = "";
-      contentChilds.forEach(cc => {
-        if (cc.type === "Text") {
-          content += cc.data;
-        }
-        else {
-          if (cc.expression.type === "Identifier")
-            content += cc.expression.name;
-          else if (cc.expression.type === "Literal") {
-            content += cc.expression.value;
-          }
-          else if (cc.expression.type === "TemplateLiteral") {
-            let quasis = "";
-            cc.expression.quasis.filter(q => q.type === "TemplateElement").forEach(q => {
-              quasis += q.value.raw;
-            });
-
-            content += quasis;
-          }
-        }
-      });
-      
-      content = content.replace(/\n/g, '').replace(/\t/g, '');
-
-      dataKeys.forEach(dk => {
-        if (content.indexOf(dk) < 0)
-          console.error(`Binding ${dk} was not found in tag <${childNode.name}> content on position: ${childNode.start} for component ${component}`);
-      })
-      
-      translations = [...translations, { id: id, text: content, line: childNode.start, tag: childNode.name, path: componentPath}];
-        
-    }
-    else {      
-      if (childNode.children && childNode.children.length)
+      else if (childNode.children && childNode.children.length){      
         translations = [...translations, ...extractTranslationsFromAstNode(childNode, componentPath)];
+      }
+    }
+    catch (e) {
+      console.error(e, ` on tag <${childNode.name}> at position: ${childNode.start} in component ${componentPath}.`);
     }
   });
   
   return translations;
+}
+
+const getIdAndObjectKeysFromAttribute = (attr) => {
+  let expression = attr.expression;
+  switch (expression.type)
+  {
+    case "CallExpression":
+      return getIdFromCallExpression(expression);
+    case "ObjectExpression":
+      return getIdFromObjectExpression(expression);
+    case "Literal":
+      return getIdFromLiteralExpression(expression);
+    default:
+      return { id: null, dataKeys: null };
+  }
+}
+
+const getIdFromCallExpression = (expression) => {
+  if (expression.callee.name !== "def")
+    throw `You must use def function with use:i18n`;
+        
+  let idProperty = expression.arguments.find(a => a.type === "Literal");
+  let id = idProperty ? idProperty.value : "";
+  let dataKeys = [];
+
+  let dataProperty = expression.arguments.find(a => a.type === "ObjectExpression");
+  if (dataProperty) {
+    if (dataProperty.type !== "ObjectExpression") {
+      throw `You must specify data as object when using use:i18n={def("", {})}`;
+    }
+
+    dataKeys = dataProperty.properties.map(p => p.key.name);
+  }
+  
+  if (!id)
+    throw 'Id not found on use:i18n attribute';
+  
+  return { id, dataKeys };
+}
+
+const getIdFromObjectExpression = (expression) => {
+  let idProperty = expression.properties.find(p => p.key.name === "id");
+  if (!idProperty) {
+    throw `You must specify id when using use:i18n={{id:""}}`;
+  }
+  
+  let id = idProperty.value.value;
+  let dataKeys = [];
+
+  let dataProperty = expression.properties.find(p => p.key.name === "data");
+  if (dataProperty) {
+    if (dataProperty.value.type !== "ObjectExpression") {
+      throw `You must specify data as object when using use:i18n={{id:"", data:{}}}`;
+    }
+
+    dataKeys = dataProperty.value.properties.map(p => p.key.name);
+  }
+  
+  if (!id)
+    throw 'Id not found on use:i18n attribute';
+
+  return { id, dataKeys };
+}
+
+const getIdFromLiteralExpression = (expression) => {
+  if(!expression.value || expression.value.length < 1)
+    throw 'Id not found on use:i18n attribute';
+  
+  return { id: expression.value, dataKeys: [] };
+}
+
+const getNodeContent = (childNode) => {
+  if (childNode.children.length < 1) {
+    throw `Tag <${childNode.name}> don't have content.`;
+  }
+
+  if(childNode.children.filter(c => c.type !== "Text" && c.type !== "Element" && c.type !== "MustacheTag").length > 0){
+    throw `Tag <${childNode.name}> can only have text, element or simple mustache binding like {xxxx}`;
+  }
+
+  let childNodes = childNode.children.filter(c => c.type === "Text" || c.type === "Element" || c.type === "MustacheTag");      
+  let content = "";
+
+  childNodes.forEach(node => {
+    content += getContentFromNodeType(node);
+  });
+  
+  content = content.replace(/\n/g, '').replace(/\t/g, '');
+  return content;
+}
+
+const getContentFromNodeType = (node) => {
+  let content = "";
+  switch (node.type) {
+    case "Text":
+      content += getTextContent(node);
+      break;
+    case "Element":
+      content += getElementContent(node);
+      break;
+    case "MustacheTag":
+      content += getMustacheTagContent(node);
+      break;
+  }
+
+  return content;
+}
+
+const getTextContent = (text) => {
+  return text.data;
+}
+
+const getMustacheTagContent = (mustache) => {
+  let content = "";
+  if (mustache.expression.type === "Identifier")
+    content += `{${mustache.expression.name}}`;
+  else if (mustache.expression.type === "Literal") {
+    content += mustache.expression.value;
+  }
+  else if (mustache.expression.type === "TemplateLiteral") {
+    let quasis = "";
+    mustache.expression.quasis.filter(q => q.type === "TemplateElement").forEach(q => {
+      quasis += q.value.raw;
+    });
+
+    content += quasis;
+  }
+
+  return content;
+}
+
+const getElementContent = (element) => {
+  if (element.name === "br") {
+    return `<${element.name}/>`;
+  }
+
+  let content = `<${element.name}>`;
+
+  element.children.forEach(child => {
+    content += getContentFromNodeType(child);
+  });
+
+  content += `</${element.name}>`;
+  return content;
+}
+
+const validateContentBindings = (content, dataKeys) => {
+  if (!dataKeys)
+    return;
+  
+  dataKeys.forEach(dk => {
+      if (content.indexOf(dk) < 0)
+        throw `Binding ${dk} was not found`;
+    });
 }
 
 async function writeLanguagesTranslations(defaultLanguage, languages, sourcesTranslations, initialTargetTranslations, translationsFolder, outputFormat) {
