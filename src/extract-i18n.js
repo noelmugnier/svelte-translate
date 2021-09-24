@@ -5,6 +5,7 @@ const svelte = require('svelte/compiler');
 const lodash = require('lodash');
 const xliff = require('xliff');
 const ts = require("typescript");
+const minimist = require('minimist');
 
 const srcPath = path.resolve("./src");
 
@@ -12,10 +13,11 @@ const srcPath = path.resolve("./src");
  * This will process .svelte files to extract html tag (with use:i18n action) content to a dedicated json file.
  */
 async function main() {
-  let languages = process.argv.slice(2);
-  let defaultLanguage = languages[0];
-  let outputFormat = 'xlf';
-  let translationsFolder = "langs";
+  let args = minimist(process.argv.slice(2));
+  let defaultLanguage = args.d || 'en';
+  let outputFormat = args.o || 'xlf';
+  let translationsFolder = args.f || 'lang';
+  let languages = args.l ? args.l.split(',') : ['en-GB'];
 
   if (translationsFolder.indexOf('/') === 0)
     translationsFolder = translationsFolder.substr(1);
@@ -23,8 +25,7 @@ async function main() {
   if (translationsFolder.indexOf('/') === translationsFolder.length - 1)
     translationsFolder = translationsFolder.substr(0, translationsFolder.length - 2);
 
-  console.log("Selected languages", languages)
-  console.log("Default language", defaultLanguage);
+  console.log(`Extracted messages languages: ${languages} will be located in ${srcPath}/${translationsFolder} folder with default language file ${defaultLanguage}.${outputFormat}`);
 
   // get all .svelte files
   glob(path.join(srcPath, "**/*.svelte"), null, async function (err, files) {

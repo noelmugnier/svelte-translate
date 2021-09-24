@@ -7,8 +7,8 @@
     "dev": "rollup -c -w",
     "start": "sirv public --no-clear",
     "check": "svelte-check --tsconfig ./tsconfig.json",
-    "extract-i18n": "node ./../src/extract-i18n.js 'en-GB' 'fr-FR'",
-    "generate-i18n": "node ./../src/generate-i18n.js"
+    "extract-i18n": "node ./../src/extract-i18n.js -l 'en-GB,fr-FR' -f 'langs' -o 'xlf' -d 'en-GB'",
+    "generate-i18n": "node ./../src/generate-i18n.js -o 'xlf' -f 'langs' -d 'langs'"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^20.0.0",

@@ -44,8 +44,8 @@ Then add two json files (fr-FR.json/en-GB.json) in public/langs folder (can be c
 * [x] create script to extract tags (id / tag content) in a dedicated messages.xx-XX.xlf files
 * [x] retrieve existing translations from file when generating the files to avoid cleared target properties
 * [x] create script to compile xlf/json files to xx-XX.json in destination (public/langs) folder
-* [ ] add script args to specify extraction folder and extraction format to extract-i18n.js
-* [ ] add script args to specify import and destination folders and format to generate-i18n.js
+* [x] add script args to specify extraction folder and extraction format to extract-i18n.js
+* [x] add script args to specify import and destination folders and format to generate-i18n.js
 * [ ] support context/description in def() helper in order to extract them and complete xlf files
 * [ ] create svelte preprocessor plugin to replace component tag with i18n id corresponding translation found from translation file (at compile time)
 * [ ] detect usage in SSR mode (and use request headers to set language)

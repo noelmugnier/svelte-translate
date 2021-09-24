@@ -2,6 +2,7 @@ const fs = require("fs-extra");
 const glob = require("glob");
 const path = require("path");
 const xliff = require('xliff');
+const minimist = require('minimist');
 
 const srcPath = path.resolve("./src");
 const destPath = path.resolve("./public");
@@ -10,9 +11,12 @@ const destPath = path.resolve("./public");
  * This will process .svelte files to extract html tag (with use:i18n action) content to a dedicated json file.
  */
 async function main() {
-  let outputFormat = 'xlf';
-  let translationsFolder = "langs";
-  let destinationFolder = "langs";
+  let args = minimist(process.argv.slice(2));
+  let outputFormat = args.o || 'xlf';
+  let translationsFolder = args.f || 'lang';
+  let destinationFolder = args.d || "lang";
+
+  console.log(`Parsing messages files with format ${outputFormat} located in folder ${srcPath}/${translationsFolder} folder and writting output in ${srcPath}/${destinationFolder} folder`);
 
   // get all .xlf/.json translation files
   glob(path.join(`${srcPath}/${translationsFolder}`, `**/messages.*.${outputFormat}`), null, async function (err, files) {
