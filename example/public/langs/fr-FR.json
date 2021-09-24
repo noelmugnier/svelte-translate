@@ -1,5 +1,5 @@
 {
-  "app.title": "Ceci est le titre par défaut avec {count, plural, =0{aucun résultat} one{un résultat} other{# résultats}} ",
+  "app.title": "Ceci est le <strong>titre par défaut</strong> avec {count, plural, =0{aucun résultat} one{un résultat} other{# résultats}} ",
   "definition": "Ceci est la définition par défaut",
   "increase": "Incrémenter {count}"
 }

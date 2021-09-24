@@ -1,17 +1,15 @@
-import LanguageSelector from "./LanguageSelector.svelte";
 import TranslatedApp from "./TranslatedApp.svelte";
 import { i18n } from "./actions";
-import { languages } from "./languages";
-import { i18nStore } from "./store";
+import { i18nStore, getLocaleFromNavigator } from "./store";
 
 export type i18nType = {
   id: string,
-  data?: Record<string, unknown>
+  data?: Record<string, any>
 }
 
 //shorthand to avoid mistake with use:i18n={{id:"",data:{}}}
-const def = (id: string, data?: Record<string, unknown>): i18nType => {
+const def = (id: string, data?: Record<string, any>): i18nType => {
   return { id, data };
 };
 
-export { TranslatedApp, LanguageSelector, i18nStore, def, i18n, languages };
+export { TranslatedApp, i18nStore, def, i18n, getLocaleFromNavigator};

@@ -20,8 +20,8 @@
     "@tsconfig/svelte": "^2.0.1",
     "fs-extra": "^10.0.0",
     "glob": "^7.1.7",
+    "intl-messageformat": "^9.9.1",
     "lodash": "^4.17.21",
-    "parse5": "^6.0.1",
     "rollup": "^2.56.3",
     "rollup-plugin-execute": "^1.1.1",
     "rollup-plugin-filesize": "^9.1.1",
@@ -42,9 +42,6 @@
     "src",
     "dist"
   ],
-  "dependencies": {
-    "@messageformat/core": "^3.0.0"
-  },
   "description": "The goal of this component is to use a dynamic translation service (loaded from xx-XX.json files) and fallback to the text in html tags if no translations are provided.",
   "version": "0.1.4",
   "repository": {

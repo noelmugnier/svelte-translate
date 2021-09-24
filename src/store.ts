@@ -1,134 +1,157 @@
-import MessageFormat from '@messageformat/core';
-
 import { writable, get, Writable } from "svelte/store";
 
-const translations:any = {
-};
+import IntlMessageFormat from 'intl-messageformat';
 
-export type lang = {
-  code: string,
-  iso: string,
-  name: string
-};
+const messages: any = {};
 
-export type langStore = {
-  isLoading: boolean,
-  language: lang,
-  languages: lang[],
-  languageSelectorEnabled: boolean,
+interface KeyValuePair<T, U>{
+    key: T;
+    value: U;
 }
 
-const defaultLang:lang = {
-  code: "en",
-  iso: "default",
-  name: "Default",
-};
+type LanguagesStore = {
+  isLoading: boolean,
+  language: string,
+  fallbackLanguage: string,
+  languages: string[]
+}
 
-const store:Writable<langStore> = writable({
+const store:Writable<LanguagesStore> = writable({
   isLoading: true,
-  language: defaultLang,
-  languages: [],
-  languageSelectorEnabled: false,
+  language: null,
+  fallbackLanguage: null,
+  languages: []
 });
 
-let mf: MessageFormat<"string"> | null = null;
-let langsPath:string = "/langs";
+export const getLocaleFromNavigator = () : string | null => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  
+  let language = window.navigator.language || window.navigator.languages[0];
+  if (!messages[language]) {
+    return findMatchingLanguageForNavigator(language);
+  }
+
+  return language;
+};
+
+const findMatchingLanguageForNavigator = (language: string): string => {
+  let languages = Object.keys(messages);
+  return languages.find(l => l.indexOf(language) > -1);  
+}
+
 const { subscribe, update } = store;
+
+let translationsToLoad: KeyValuePair<string, () => Promise<any>>[] = [];
 
 export const i18nStore = {
   subscribe,
-  init: async (selectedLanguages: lang[], defaultLanguage: lang, langsFolderPath?: string): Promise<void> => {
-    defaultLang.code = defaultLanguage.code;
-    defaultLang.name = defaultLanguage.name;
-    defaultLang.iso = defaultLanguage.iso;
+  init: async (fallbackLanguage: string, initialLanguage?: string): Promise<void> => {
+    if (!initialLanguage)
+    {
+      initialLanguage = fallbackLanguage;
+    }
     
-    langsPath = langsFolderPath ? langsFolderPath : langsPath;
-
-    let language:lang = defaultLanguage;
-    let languages:lang[] = [...selectedLanguages];
-    let languageSelectorEnabled:boolean = languages.length > 1 ? true : false;
-    
-    //initialize message format with selected language code
-    mf = new MessageFormat(language.code);
-    await setTranslations(language, languages, languageSelectorEnabled, true);
+    await setTranslations(initialLanguage, fallbackLanguage);    
+    setIsLoading(false);
   },
-  setLanguage: async (language:lang): Promise<void> => {
+  addTranslations: (language: string, translations: {}) => {
+    messages[language] = translations;
+
+    update(value => {
+      value.languages = [...value.languages, language];
+      return value;
+    });
+  },
+  registerTranslations: (language: string, callback: () => Promise<any>) => {
+    if (translationsToLoad.find(t => t.key === language))
+      throw `translations ${language} are already registered as defered loading.`;
+    
+    messages[language] = null;    
+    translationsToLoad = [...translationsToLoad, { key: language, value: callback }];
+  },
+  setLanguage: async (language: string): Promise<void> => {    
     await setTranslations(language);
   },
-  getTranslationFormatted: (id:string, data?:Record<string, unknown>) : string | null => {
+  getTranslationFormatted: (id:string, data?:Record<string, any>) : string => {
     let storeValues = get(store);
-    let entry = getTranslationEntry(id, storeValues.language);
-    if (!entry) {
-      return null;
+    let translation = getTranslationEntry(id, storeValues.language);
+    if (!translation) {
+      return "";
     }
-
-    if (mf === null)
-      throw "you must init the i18nStore by using <TranslatedApp /> or explicitly calling i18nStore.init(...)";
     
-    let compiledFunction = mf.compile(entry);
-    return compiledFunction(data);
+    let formattedTranslation = new IntlMessageFormat(translation, storeValues.language).format<string>(data);
+    return typeof(formattedTranslation) === "object" ? formattedTranslation[0] : formattedTranslation;
   },
-  getTranslationEntry: (id:string, language?:lang): string | null => {
-    if (!language) {
-      language = defaultLang;
-    }
-
+  getTranslationEntry: (id:string, language?:string): string | null => {
     return getTranslationEntry(id, language);
   }
 };
 
-const setTranslations = async (language: lang, languages?: lang[], languageSelectorEnabled?: boolean, initialization:boolean = false): Promise<void> => {
-  //only import if language change and if it's not already loaded in translations.
-  if ((initialization || (language.iso !== get(store).language.iso)) &&
-    !translations[language.iso]
-  ) {
-    try {
-      let results = await fetch(`${langsPath}/${language.iso}.json`);
-      if (results.ok) {
-        translations[language.iso] = await results.json();
+const setTranslations = async (newLanguage: string, fallbackLanguage?: string): Promise<void> => {
+  let storeLanguages = get(store);
+  let changingLanguage = newLanguage !== storeLanguages.language;
+  
+  if (changingLanguage && !messages[newLanguage] && translationsToLoad.length > 0) {
+    let translationToLoad = translationsToLoad.find(t => t.key === newLanguage);
+    translationsToLoad = translationsToLoad.filter(t => t.key !== newLanguage);
+    
+    if (translationToLoad) {
+      try {
+        setIsLoading(true);
+        
+        let results = await translationToLoad.value();
+        messages[newLanguage] = results.default ? results.default : results;
       }
-      updateConfiguration(language, languages, languageSelectorEnabled);
+      catch (e) {
+        console.error(`An error occured while retrieving translations for lang ${newLanguage}`);
+        translationsToLoad = [...translationsToLoad, translationToLoad];
+
+        setIsLoading(false);
+        throw e;
+      }
     }
-    catch (e) {
-      console.error(e);
-      updateConfiguration(language, languages, languageSelectorEnabled);      
+  }
+
+  if (changingLanguage) {  
+    update((value) => {
+      value.language = newLanguage;
+      value.fallbackLanguage = fallbackLanguage;
+      value.isLoading = false;
+      return value;
+    });
+    
+    if (typeof window !== 'undefined') {
+      document.documentElement.setAttribute('lang', newLanguage.split('-')[0]);
     }
-  } else {
-    updateConfiguration(language, languages, languageSelectorEnabled);
   }
 };
 
-const updateConfiguration = (language:lang, languages?:lang[], languageSelectorEnabled?:boolean): void => {
+const setIsLoading = (isLoading: boolean) => {
   update((value) => {
-    value.language = language;
-
-    if (languages != null) {
-      value.languages = languages;
-    }
-
-    if (languageSelectorEnabled != null) {
-      value.languageSelectorEnabled = languageSelectorEnabled;
-    }
-
-    value.isLoading = false;
+    value.isLoading = isLoading;
     return value;
   });
-};
+}
 
-const getTranslationEntry = (id:string, language?:lang): string | null => {
-  language = language ? language : defaultLang;
-  let entity = translations[language.iso];
+const getTranslationEntry = (id: string, language?: string): string | null => {
+  let storeLanguages = get(store);
+  if (!storeLanguages.language)
+    throw 'Default language not yet initialized';
   
-  if (!entity) {
-    language = defaultLang;
-    entity = translations[language.iso];
+  if (!language)
+  {
+    language = storeLanguages.fallbackLanguage;
   }
+  
+  let entity = messages[language];  
   
   const entry = entity[id];
   if (!entry || !entry.length || typeof entry !== "string") {
     //if we don't find the translation entry for given language, search with default
-    if (language.iso !== defaultLang.iso) {
-      return getTranslationEntry(id, defaultLang);
+    if (language !== storeLanguages.fallbackLanguage) {
+      return getTranslationEntry(id, storeLanguages.fallbackLanguage);
     }
 
     return null;

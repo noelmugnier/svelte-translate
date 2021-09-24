@@ -2,24 +2,30 @@
 	import {
 	  i18n,
 	  def,
-	  languages,
 	  TranslatedApp,
-	  LanguageSelector
+	  i18nStore,
+	  getLocaleFromNavigator
 	} from "svelte-translate";
+	import LanguageSelector from "./LanguageSelector.svelte";
+	
+	import enGB from './../public/langs/en-GB.json';
+	import frFR from './../public/langs/fr-FR.json';
 
 	let count = 0;
-	let availableLanguages = [languages.enGB, languages.frFR, languages.itIT];
+
+	i18nStore.addTranslations("en-GB", enGB);
+	i18nStore.addTranslations("fr-FR", frFR);
 </script>
 
 <TranslatedApp 
-	languages={availableLanguages} 
-	defaultLanguage={languages.enGB} 
-	hideContentWhileLoading={false}>
-	<LanguageSelector selectedLanguage={languages.frFR}/>
-	<h2 use:i18n={def("app.title",{count})}>
-		This is my default title with 
+	fallbackLanguage="fr-FR" 
+	initialLanguage={getLocaleFromNavigator()}
+	hideContentWhileLoading={true}>
+	<LanguageSelector/>
+	<p use:i18n={def("app.title",{count, strong: chunks => `<strong>${chunks}</strong>`})}>
+		This is my <strong>default title</strong> with 
 		{`{count, plural, =0{no results} one{one result} other{# results}}`}
-	</h2> 
+	</p> 
 	<i use:i18n={"definition"}>This is my default definition</i>
 	<br/> 
 	<br/> 

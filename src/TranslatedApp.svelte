@@ -1,13 +1,12 @@
 <script lang="ts">
-  import { i18nStore, lang } from "./store";
+  import { i18nStore } from "./store";
 
-  export let languages: lang[];
-  export let defaultLanguage: lang;
+  export let fallbackLanguage: string;
+  export let initialLanguage: string = null;
   export let hideContentWhileLoading: boolean = true;
-  export let translationsFolder: string = "/langs";
 
   //if used in ssr mode, should get default language from $browser request headers
-  i18nStore.init(languages, defaultLanguage, translationsFolder);    
+  i18nStore.init(fallbackLanguage, initialLanguage);    
 </script>
 
 {#if !hideContentWhileLoading || !$i18nStore.isLoading}
