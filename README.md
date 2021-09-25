@@ -1,5 +1,5 @@
 
-# Svelte Translate Tool (inspired by angular i18n)
+# Svelte Translate (inspired by angular i18n and svelte-i18n)
 
 Dynamic translation service (loaded from xx-XX.json files) and fallback to the text in html tags if no translations are provided.
 
@@ -14,23 +14,36 @@ This component use [MessageFormat.js](https://github.com/messageformat/messagefo
     import {
 	  i18n,
 	  def,
+	  i18nStore,
 	  languages,
 	  TranslatedApp,
-	  LanguageSelector
+	  getLocaleFromNavigator
 	} from "svelte-translate";
 
-	let sampleValue = 0;
+	import LanguageSelector from "./LanguageSelector.svelte";
+
+	import enGB from './../public/lang/en-GB.json';
+	import frFR from './../public/lang/fr-FR.json';
+
+	let count = 0;
+
+	i18nStore.addTranslations("en-GB", enGB);
+	i18nStore.addTranslations("fr-FR", frFR);
 </script>
 ```
 
 ```html
-<TranslatedApp languages={[languages.enGB,languages.frFR]} defaultLanguage={languages.frFR}>
+<TranslatedApp 
+	fallbackLanguage="fr-FR" 
+	initialLanguage={getLocaleFromNavigator()}
+	hideContentWhileLoading={true}>
     <LanguageSelector />
     <span i18n={def("myid", {sampleValue})}>Default text with bindings {sampleValue}<span>
     <span i18n={"simpleid"}>Text without complex construction</span>
 </TranslatedApp>
+
 ```
-Then add two json files (fr-FR.json/en-GB.json) in public/langs folder (can be changed with attribute translationsFolder) containing your translations :
+Then add two json files (fr-FR.json/en-GB.json) in public/lang folder containing your translations :
 
 ```json
 {
@@ -41,11 +54,4 @@ Then add two json files (fr-FR.json/en-GB.json) in public/langs folder (can be c
 
 # TODO
 
-* [x] create script to extract tags (id / tag content) in a dedicated messages.xx-XX.xlf files
-* [x] retrieve existing translations from file when generating the files to avoid cleared target properties
-* [x] create script to compile xlf/json files to xx-XX.json in destination (public/langs) folder
-* [x] add script args to specify extraction folder and extraction format to extract-i18n.js
-* [x] add script args to specify import and destination folders and format to generate-i18n.js
-* [ ] support context/description in def() helper in order to extract them and complete xlf files
-* [ ] create svelte preprocessor plugin to replace component tag with i18n id corresponding translation found from translation file (at compile time)
-* [ ] detect usage in SSR mode (and use request headers to set language)
+* [ ] support context/description in def() helper in order to extract them and complete xlf files require a fork on xliff library to use custom attributes

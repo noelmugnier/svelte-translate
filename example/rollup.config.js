@@ -7,6 +7,7 @@ import sveltePreprocess from 'svelte-preprocess';
 import typescript from '@rollup/plugin-typescript';
 import css from 'rollup-plugin-css-only';
 import json from 'rollup-plugin-json';
+import { extracti18n, generatei18n, preprocess_compilei18n } from 'svelte-translate-tools';
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -40,8 +41,13 @@ export default {
 		file: 'public/build/bundle.js'
 	},
 	plugins: [
+		extracti18n({languages:['en-GB','fr-FR'], defaultLanguage:'en-GB'}),
+		generatei18n(),
 		svelte({
-			preprocess: sveltePreprocess({ sourceMap: !production }),
+			preprocess: [			
+				preprocess_compilei18n(),
+				sveltePreprocess({ sourceMap: !production }),	
+			],
 			compilerOptions: {
 				// enable run-time checks when not in production
 				dev: !production

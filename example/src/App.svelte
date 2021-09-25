@@ -6,10 +6,11 @@
 	  i18nStore,
 	  getLocaleFromNavigator
 	} from "svelte-translate";
+	
 	import LanguageSelector from "./LanguageSelector.svelte";
 	
-	import enGB from './../public/langs/en-GB.json';
-	import frFR from './../public/langs/fr-FR.json';
+	import enGB from './../public/lang/en-GB.json';
+	import frFR from './../public/lang/fr-FR.json';
 
 	let count = 0;
 

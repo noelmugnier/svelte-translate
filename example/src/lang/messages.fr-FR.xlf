@@ -7,7 +7,7 @@
       </trans-unit>
       <trans-unit id="definition">
         <source>This is my default definition</source>
-        <target>Ceci est une définition par défaut</target>
+        <target>Ceci est la définition par défaut</target>
       </trans-unit>
       <trans-unit id="increase">
         <source>Increase {count}</source>

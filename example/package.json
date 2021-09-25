@@ -26,6 +26,7 @@
     "svelte-check": "^2.0.0",
     "svelte-preprocess": "^4.0.0",
     "svelte-translate": "file:./../",
+    "svelte-translate-tools": "^0.1.3",
     "tslib": "^2.0.0",
     "typescript": "^4.0.0"
   },
