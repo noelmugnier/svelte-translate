@@ -3,9 +3,9 @@
 
 Dynamic translation service (loaded from xx-XX.json files) and fallback to the text in html tags if no translations are provided.
 
-# MessageFormat
+# ICU support (FormatJS)
 
-This component use [MessageFormat.js](https://github.com/messageformat/messageformat) to handle complex formatting (plural, select, etc...)
+This component use [formatjs](https://github.com/formatjs/formatjs) to handle complex formatting (plural, select, etc...)
 
 # Usages
 
