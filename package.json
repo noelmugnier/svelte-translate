@@ -39,7 +39,7 @@
     "dist"
   ],
   "description": "Dynamic translation service (loaded from xx-XX.json files) and fallback to the text in html tags if no translations are provided.",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/noelmugnier/svelte-translate.git"
