@@ -13,14 +13,18 @@ type LanguagesStore = {
   isLoading: boolean,
   language: string,
   fallbackLanguage: string,
-  languages: string[]
+  languages: string[],
+  mode:TranslationMode,
 }
+
+type TranslationMode = "Dynamic" | "PreCompiled";
 
 const store:Writable<LanguagesStore> = writable({
   isLoading: true,
   language: null,
   fallbackLanguage: null,
-  languages: []
+  languages: [],
+  mode: null
 });
 
 export const getLocaleFromNavigator = () : string | null => {
@@ -53,6 +57,11 @@ export const i18nStore = {
       initialLanguage = fallbackLanguage;
     }
     
+    update((value) => {
+      value.mode = "Dynamic";
+      return value;
+    });
+    
     await setTranslations(initialLanguage, fallbackLanguage);    
     setIsLoading(false);
   },
@@ -66,6 +75,7 @@ export const i18nStore = {
       value.language = compiledLanguage;
       value.fallbackLanguage = compiledLanguage;
       value.isLoading = false;
+      value.mode = "PreCompiled";
       return value;
     });
     
@@ -112,6 +122,11 @@ export const i18nStore = {
 };
 
 const setTranslations = async (newLanguage: string, fallbackLanguage?: string): Promise<void> => {
+  if (get(store).mode === "PreCompiled")
+  {
+    throw 'Cannot setTranslations while using a <PreTranslatedApp>. You must use the <DynamicTranslatedApp> instead.';
+  }
+
   let storeLanguages = get(store);
   let changingLanguage = newLanguage !== storeLanguages.language;
   
