@@ -16,7 +16,7 @@ This component use [formatjs](https://github.com/formatjs/formatjs) to handle co
 	  def,
 	  i18nStore,
 	  languages,
-	  TranslatedApp,
+	  DynamicTranslatedApp,
 	  getLocaleFromNavigator
 	} from "svelte-translate";
 
@@ -33,14 +33,14 @@ This component use [formatjs](https://github.com/formatjs/formatjs) to handle co
 ```
 
 ```html
-<TranslatedApp 
+<DynamicTranslatedApp 
 	fallbackLanguage="fr-FR" 
 	initialLanguage={getLocaleFromNavigator()}
 	hideContentWhileLoading={true}>
     <LanguageSelector />
     <span i18n={def("myid", {sampleValue})}>Default text with bindings {sampleValue}<span>
     <span i18n={"simpleid"}>Text without complex construction</span>
-</TranslatedApp>
+</DynamicTranslatedApp>
 
 ```
 Then add two json files (fr-FR.json/en-GB.json) in public/lang folder containing your translations :
