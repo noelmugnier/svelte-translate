@@ -47,7 +47,7 @@ let translationsToLoad: KeyValuePair<string, () => Promise<any>>[] = [];
 
 export const i18nStore = {
   subscribe,
-  init: async (fallbackLanguage: string, initialLanguage?: string): Promise<void> => {
+  initDynamicStore: async (fallbackLanguage: string, initialLanguage?: string): Promise<void> => {
     if (!initialLanguage)
     {
       initialLanguage = fallbackLanguage;
@@ -55,6 +55,23 @@ export const i18nStore = {
     
     await setTranslations(initialLanguage, fallbackLanguage);    
     setIsLoading(false);
+  },
+  initPreCompiledStore: async (compiledLanguage?: string): Promise<void> => {
+    if (!compiledLanguage)
+    {
+      throw 'The "compiledLanguage" must be set on <PreTranslatedApp> tag. You must use the preprocess_compilei18n preprocessor in your rollup.config.js to auto assign the value.';
+    }
+    
+    update((value) => {
+      value.language = compiledLanguage;
+      value.fallbackLanguage = compiledLanguage;
+      value.isLoading = false;
+      return value;
+    });
+    
+    if (typeof window !== 'undefined') {
+      document.documentElement.setAttribute('lang', compiledLanguage.split('-')[0]);
+    }
   },
   addTranslations: (language: string, translations: {}) => {
     messages[language] = translations;
@@ -83,6 +100,11 @@ export const i18nStore = {
     
     let formattedTranslation = new IntlMessageFormat(translation, storeValues.language).format<string>(data);
     return typeof(formattedTranslation) === "object" ? formattedTranslation[0] : formattedTranslation;
+  },
+  getFormattedMessage: (value:string, data?:Record<string, any>) : string => {     
+    let storeValues = get(store);   
+    let formattedMessage = new IntlMessageFormat(value, storeValues.language).format<string>(data);
+    return typeof(formattedMessage) === "object" ? formattedMessage[0] : formattedMessage;
   },
   getTranslationEntry: (id:string, language?:string): string | null => {
     return getTranslationEntry(id, language);

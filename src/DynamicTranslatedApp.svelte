@@ -6,7 +6,7 @@
   export let hideContentWhileLoading: boolean = true;
 
   //if used in ssr mode, should get default language from $browser request headers
-  i18nStore.init(fallbackLanguage, initialLanguage);    
+  i18nStore.initDynamicStore(fallbackLanguage, initialLanguage);    
 </script>
 
 {#if !hideContentWhileLoading || !$i18nStore.isLoading}

@@ -15,9 +15,39 @@ export const i18n = (node: HTMLElement, params: i18nType | string) => {
 
   return {
     update(params: i18nType | string) {
-      let newParamsInfo = getIdAndDataFromParams(params);
-      data = newParamsInfo.data;            
+      data = getIdAndDataFromParams(params).data;            
       node.innerHTML = i18nStore.getTranslationFormatted(id, (data as any));
+    },
+    destroy() {
+      if (unsubscriber) {
+        unsubscriber();
+      }
+    },
+  };
+};
+
+export const i18nFormat = (node: HTMLElement, params: i18nType | string) => {
+  const content = node.innerHTML;
+  //TODO must check for complex formatting (plural, select, date, time etc...)
+  const canSkipFormat = typeof (params) === "string" && content.indexOf('{') < 0;
+  
+  if (canSkipFormat) {
+    return;
+  }
+
+  let { data } = getIdAndDataFromParams(params);
+  let unsubscriber: Unsubscriber = i18nStore.subscribe((manager) => {        
+    node.innerHTML = i18nStore.getFormattedMessage(content, data);
+  });
+
+  return {
+    update(params: i18nType | string) { 
+      if (canSkipFormat) {
+        return;
+      }
+      
+      data = getIdAndDataFromParams(params).data;            
+      node.innerHTML = i18nStore.getFormattedMessage(content, data);
     },
     destroy() {
       if (unsubscriber) {

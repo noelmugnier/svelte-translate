@@ -1,5 +1,6 @@
-import TranslatedApp from "./TranslatedApp.svelte";
-import { i18n } from "./actions";
+import DynamicTranslatedApp from "./DynamicTranslatedApp.svelte";
+import PreTranslatedApp from "./PreTranslatedApp.svelte";
+import { i18n, i18nFormat } from "./actions";
 import { i18nStore, getLocaleFromNavigator } from "./store";
 
 export type i18nType = {
@@ -12,4 +13,4 @@ const def = (id: string, data?: Record<string, any>): i18nType => {
   return { id, data };
 };
 
-export { TranslatedApp, i18nStore, def, i18n, getLocaleFromNavigator};
+export { DynamicTranslatedApp, PreTranslatedApp, i18nStore, def, i18n, i18nFormat, getLocaleFromNavigator};
