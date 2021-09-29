@@ -2,7 +2,7 @@
 	import {
 	  i18n,
 	  def,
-	  TranslatedApp,
+	  DynamicTranslatedApp,
 	  i18nStore,
 	  getLocaleFromNavigator
 	} from "svelte-translate";
@@ -18,7 +18,7 @@
 	i18nStore.addTranslations("fr-FR", frFR);
 </script>
 
-<TranslatedApp 
+<DynamicTranslatedApp 
 	fallbackLanguage="fr-FR" 
 	initialLanguage={getLocaleFromNavigator()}
 	hideContentWhileLoading={true}>
@@ -33,4 +33,4 @@
 	<button use:i18n={def("increase", {count})} on:click={() => count++}>
 		Increase {count}
 	</button>
-</TranslatedApp>
+</DynamicTranslatedApp>
