@@ -23,7 +23,7 @@
 	initialLanguage={getLocaleFromNavigator()}
 	hideContentWhileLoading={true}>
 	<LanguageSelector/>
-	<p use:i18n={def("app.title",{count, strong: chunks => `<strong>${chunks}</strong>`})}>
+	<p use:i18n={def("app.title",{count, strong: chunks => `<strong>${chunks}</strong>`}, "Title used on App.svelte")}>
 		This is my <strong>default title</strong> with 
 		{`{count, plural, =0{no results} one{one result} other{# results}}`}
 	</p> 

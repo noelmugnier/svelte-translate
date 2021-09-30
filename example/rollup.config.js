@@ -1,12 +1,19 @@
-import svelte from 'rollup-plugin-svelte';
 import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
-import livereload from 'rollup-plugin-livereload';
-import { terser } from 'rollup-plugin-terser';
-import sveltePreprocess from 'svelte-preprocess';
 import typescript from '@rollup/plugin-typescript';
+
+import svelte from 'rollup-plugin-svelte';
+
+import livereload from 'rollup-plugin-livereload';
+
+import { terser } from 'rollup-plugin-terser';
+
+import sveltePreprocess from 'svelte-preprocess';
+
 import css from 'rollup-plugin-css-only';
+
 import json from 'rollup-plugin-json';
+
 import { extracti18n, generatei18n, preprocess_compilei18n } from 'svelte-translate-tools';
 
 const production = !process.env.ROLLUP_WATCH;
@@ -44,8 +51,7 @@ export default {
 		extracti18n({languages:['en-GB','fr-FR'], defaultLanguage:'en-GB'}),
 		generatei18n(),
 		svelte({
-			preprocess: [			
-				preprocess_compilei18n(),
+			preprocess: [		
 				sveltePreprocess({ sourceMap: !production }),	
 			],
 			compilerOptions: {
